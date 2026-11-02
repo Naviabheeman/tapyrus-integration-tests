@@ -45,6 +45,10 @@ on:
       docker_build_platform:
         description: 'Docker --platform for image builds; leave empty for the runner''s native platform'
 
+  # Lets chaintope/tapyrus-core run this as one of its jobs. Inputs are left
+  # blank, so the env: block's defaults apply.
+  workflow_call:
+
   # Smoke run for this repo's own scripts/compose/workflow changes.
   pull_request:
     paths-ignore:
@@ -86,12 +90,17 @@ env:
 
 jobs:
   integration-test:
+    # Forks skip this job, and tapyrus-core is the only repo allowed to call it.
+    if: github.repository == 'chaintope/tapyrus-integration-tests' || github.repository == 'chaintope/tapyrus-core'
     runs-on: ubuntu-latest
     # Smoke: 3h. Full: 6h. Headroom for cold image builds + cargo build --release.
     timeout-minutes: ${{ (github.event_name == 'pull_request' || github.event_name == 'push') && 180 || 360 }}
     steps:
       - name: Checkout this repo
         uses: actions/checkout@v5
+        with:
+          # When called from another repo, checkout defaults to the caller.
+          repository: chaintope/tapyrus-integration-tests
 
       - name: Set up Python
         uses: actions/setup-python@v6

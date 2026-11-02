@@ -31,6 +31,12 @@ The workflow (`weekly-integration-test.yml`) has two trigger shapes:
   "smoke" scale, so a change to this repo's own scripts/compose/workflow is validated
   before the following Sunday's run rather than after. See `doc/work-done.md` for why.
 
+`chaintope/tapyrus-core` can also run it as a job through **`workflow_call`**. The scale
+then follows the caller's event: a scheduled caller gets the full-scale scenario, a
+`push` or `pull_request` caller the smoke scale. The run appears in the caller's Actions
+tab, and the variable table's defaults apply. The job is skipped in every other repo,
+including forks of this one.
+
 A single `integration-test` job runs these steps in order:
 
 1. **Checkout this repo**, then checkout `tapyrus-core` + `tapyrus-signer` +

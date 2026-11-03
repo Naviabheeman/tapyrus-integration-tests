@@ -24,18 +24,18 @@ implemented vs. still outstanding.
 
 The workflow (`weekly-integration-test.yml`) has two trigger shapes:
 
-- **`schedule`** (Sunday 03:00 UTC / Sunday 12:00 noon JST) and **`workflow_dispatch`**
-  (on demand) run the full-scale scenario -- the defaults in the variable table below.
+- **`workflow_call`** from `chaintope/tapyrus-core`'s weekly schedule (Sunday 12:17 UTC /
+  Sunday 21:17 JST) and **`workflow_dispatch`** (on demand) run the full-scale scenario
+  -- the defaults in the variable table below.
 - **`pull_request`** and **`push`** to `main` (path-filtered to `scripts/**`,
   `docker/**`, `config/**`, `.github/workflows/**`) run the same job at a smaller
   "smoke" scale, so a change to this repo's own scripts/compose/workflow is validated
   before the following Sunday's run rather than after. See `doc/work-done.md` for why.
 
-`chaintope/tapyrus-core` can also run it as a job through **`workflow_call`**. The scale
-then follows the caller's event: a scheduled caller gets the full-scale scenario, a
-`push` or `pull_request` caller the smoke scale. The run appears in the caller's Actions
-tab, and the variable table's defaults apply. The job is skipped in every other repo,
-including forks of this one.
+A called run's scale follows the caller's event, and the caller's job only runs on its
+schedule. The run appears in the caller's Actions tab, and the variable table's defaults
+apply. The caller must use `@main`, because a called run always gets the default branch's
+scripts. The job is skipped in every other repo, including forks of this one.
 
 A single `integration-test` job runs these steps in order:
 
@@ -44,7 +44,8 @@ A single `integration-test` job runs these steps in order:
    configurable, see below.
 2. **Build Docker images** for `tapyrus-core`, `tapyrus-signer`, and `tapyrus-seeder`
    from the checkouts.
-3. **Offline ceremony for signer-set-a**: build the `tapyrus-setup` binary, then run
+3. **Offline ceremony for signer-set-a**: copy the `tapyrus-setup` binary out of the
+   signer image, then run
    `scripts/generate_dev_secrets.py` to produce the aggregated public key (no containers
    involved yet).
 4. **Genesis signing**: build the unsigned genesis via `tapyrus-genesis`, then sign it
@@ -100,10 +101,10 @@ untested or unbuilt.
 ## Variables available to change during a run
 
 Every variable below is a `workflow_dispatch` input. `workflow_dispatch` input
-`default:` fields can't hold an expression, and `schedule`/`pull_request`/`push` runs
-have no `inputs` context to read one from anyway, so no default is set on the inputs
+`default:` fields can't hold an expression, and `workflow_call`/`pull_request`/`push` runs
+have no inputs to read one from anyway, so no default is set on the inputs
 themselves. Two different mechanisms supply one when a field is left blank (a manual
-dispatch run that leaves a field blank gets the same value schedule does either way):
+dispatch run that leaves a field blank gets the same value a called run does either way):
 
 - `core_repo_url`/`core_repo_ref`, `signer_repo_url`/`signer_repo_ref`,
   `seeder_repo_url`/`seeder_repo_ref` fall back to [`config/repos.py`](config/repos.py)'s

@@ -41,8 +41,6 @@ on:
       # --- misc ---
       network_id:
         description: 'Tapyrus network id (prod mode -- see doc/work-done.md), used by every core-* node''s rendered tapyrus.conf and the genesis.<id> file tapyrusd looks for. Not yet wired into the seeder (deferred, see the "Bring up tapyrus-seeder and verify it" step). Leave blank for the default -- see README.md''s variable table.'
-      docker_build_platform:
-        description: 'Docker --platform for image builds; leave empty for the runner''s native platform'
 
   # Lets chaintope/tapyrus-core run this as one of its jobs. Inputs are left
   # blank, so the env: block's defaults apply.
@@ -62,13 +60,12 @@ permissions:
   contents: read
 
 concurrency:
-  # event_name in the key: a push-triggered smoke run can't cancel a scheduled full run.
+  # event_name in the key: a push-triggered smoke run can't cancel a manual full run.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   # No literal fallback -- an unset url/ref resolves to config/repos.py's own default.
-  DOCKER_BUILD_PLATFORM: ${{ inputs.docker_build_platform || '' }}
   CORE_REPO_URL: ${{ inputs.core_repo_url }}
   CORE_REPO_REF: ${{ inputs.core_repo_ref }}
   SIGNER_REPO_URL: ${{ inputs.signer_repo_url }}
@@ -171,21 +168,13 @@ jobs:
         run: ./scripts/checkout_repos.py
 
       - name: Build tapyrus-core image (tapyrus/tapyrusd:master-local)
-        run: |
-          docker build ${DOCKER_BUILD_PLATFORM:+--platform "$DOCKER_BUILD_PLATFORM"} \
-            -t tapyrus/tapyrusd:master-local -f workdir/tapyrus-core/Dockerfile workdir/tapyrus-core
+        run: docker build -t tapyrus/tapyrusd:master-local -f workdir/tapyrus-core/Dockerfile workdir/tapyrus-core
       - name: Build node-orchestrator image (tapyrus/tapyrusd:orchestrator)
-        run: |
-          docker build ${DOCKER_BUILD_PLATFORM:+--platform "$DOCKER_BUILD_PLATFORM"} \
-            -t tapyrus/tapyrusd:orchestrator -f docker/orchestrator.Dockerfile docker/
+        run: docker build -t tapyrus/tapyrusd:orchestrator -f docker/orchestrator.Dockerfile docker/
       - name: Build tapyrus-signer image (tapyrus-signer:integration-test)
-        run: |
-          docker build ${DOCKER_BUILD_PLATFORM:+--platform "$DOCKER_BUILD_PLATFORM"} \
-            -t tapyrus-signer:integration-test workdir/tapyrus-signer
+        run: docker build -t tapyrus-signer:integration-test workdir/tapyrus-signer
       - name: Build tapyrus-seeder image (tapyrus-seeder:integration-test)
-        run: |
-          docker build ${DOCKER_BUILD_PLATFORM:+--platform "$DOCKER_BUILD_PLATFORM"} \
-            -t tapyrus-seeder:integration-test workdir/tapyrus-seeder
+        run: docker build -t tapyrus-seeder:integration-test workdir/tapyrus-seeder
 
       - name: Copy tapyrus-setup binary out of the signer image
         # Runs the build the signers ship, and keeps this runner's compiler out of the job.

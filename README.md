@@ -135,7 +135,6 @@ input; the rest fall back straight to their `env:` literal on every trigger,
 | `reorg_length_blocks` | `30` (`5` on pull_request/push) | Blocks each isolated group builds past the baseline, alone, before reconnecting at the tie (`scripts/simulate_reorg.py`: group B builds first while group A is stopped entirely, then group A builds its own, genuinely different set while group B is stopped). Group B is then always extended by exactly 2 more blocks to win (not 1 -- `core-3a` produced group A's original tip itself, so it needs a second block to reclassify that tip as `valid-fork` instead of `valid-headers`) -- not configurable, and not probed for -- see `doc/scripts.md` |
 | `round_duration_seconds` | `30` | `tapyrus-signerd` round-duration (block interval) -- verified clean, see `doc/work-done.md`'s Lessons learnt (`10` is confirmed to hit transient `InvalidBlock` errors) |
 | `network_id` | `1905960821` | Tapyrus network id (prod mode, see `doc/work-done.md`), used by every core-* node's rendered `tapyrus.conf` and the `genesis.<id>` file `tapyrusd` looks for |
-| `docker_build_platform` | *(empty, runner-native)* | Docker `--platform` for image builds -- local verification only ever used `linux/arm64` |
 
 `FEDERATION_CHANGE_OFFSET_BLOCKS` is always `REORG_LENGTH_BLOCKS` (computed by the "Derive
 FEDERATION_CHANGE_OFFSET_BLOCKS from REORG_LENGTH_BLOCKS" workflow step), and `MAX_BLOCK_SIZE_OFFSET_BLOCKS`
